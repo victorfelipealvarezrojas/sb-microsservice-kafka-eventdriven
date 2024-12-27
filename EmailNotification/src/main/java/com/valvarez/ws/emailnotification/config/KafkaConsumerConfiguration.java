@@ -1,5 +1,6 @@
 package com.valvarez.ws.emailnotification.config;
 
+import com.valvarez.ws.emailnotification.error.NotRetryAbleException;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +15,8 @@ import org.springframework.kafka.listener.DefaultErrorHandler;
 import org.springframework.kafka.support.serializer.ErrorHandlingDeserializer;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.kafka.support.serializer.JsonSerializer;
+import org.springframework.util.backoff.FixedBackOff;
+import org.springframework.web.client.HttpServerErrorException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -32,7 +35,7 @@ public class KafkaConsumerConfiguration {
         config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ErrorHandlingDeserializer.class);
         config.put(ErrorHandlingDeserializer.VALUE_DESERIALIZER_CLASS, JsonDeserializer.class);
         config.put(JsonDeserializer.TRUSTED_PACKAGES, env.getProperty("spring.kafka.consumer.properties.spring.json.trusted.packages"));
-        config.put(ConsumerConfig.GROUP_ID_CONFIG, env.getProperty("spring.kafka.consumer.group-id"));
+        config.put(ConsumerConfig.GROUP_ID_CONFIG, env.getProperty("customer.consumer.group-id"));
         return new DefaultKafkaConsumerFactory<>(config);
     }
 
@@ -41,7 +44,12 @@ public class KafkaConsumerConfiguration {
             ConsumerFactory<String, Object> consumerFactory,
             KafkaTemplate<String, Object> kafkaTemplate
     ) {
-        DefaultErrorHandler errorHandler = new DefaultErrorHandler(new DeadLetterPublishingRecoverer(kafkaTemplate));
+
+        DefaultErrorHandler errorHandler = new DefaultErrorHandler(
+                new DeadLetterPublishingRecoverer(kafkaTemplate), new FixedBackOff(5000,3)); // producer Dead Letter Topic (DLT)
+        errorHandler.addNotRetryableExceptions(NotRetryAbleException.class); // exceptions that are not retryable
+        errorHandler.addRetryableExceptions(HttpServerErrorException.class); // exceptions that are retryable
+
         ConcurrentKafkaListenerContainerFactory<String, Object> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory);
         factory.setCommonErrorHandler(errorHandler);
@@ -53,6 +61,7 @@ public class KafkaConsumerConfiguration {
         return new KafkaTemplate<>(producerFactory);
     }
 
+    // tiene que ver con el control de errores en el consumer que se llama Dead Letter Topic (DLT)
     @Bean
     ProducerFactory<String, Object> producerFactory() {
         Map<String, Object> config = new HashMap<>();

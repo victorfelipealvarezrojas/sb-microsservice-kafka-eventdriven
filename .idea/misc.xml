@@ -7,10 +7,13 @@
         <option value="$PROJECT_DIR$/ProductMS/pom.xml" />
         <option value="$PROJECT_DIR$/EmailNotification/pom.xml" />
         <option value="$PROJECT_DIR$/core/pom.xml" />
+        <option value="$PROJECT_DIR$/TransferService/pom.xml" />
+        <option value="$PROJECT_DIR$/DepositService/pom.xml" />
+        <option value="$PROJECT_DIR$/WithdrawalService/pom.xml" />
       </list>
     </option>
   </component>
   <component name="ProjectRootManager" version="2" languageLevel="JDK_19" default="true" project-jdk-name="19" project-jdk-type="JavaSDK">
-    <output url="file://$PROJECT_DIR$/out" />
+    <output url="file://$PROJECT_DIR$/../SAGA-CQRS-MS" />
   </component>
 </project>

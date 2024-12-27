@@ -6,17 +6,25 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
+        <module name="core" />
         <module name="EmailNotification" />
         <module name="ProductMS" />
-        <module name="core" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="DepositService" target="17" />
+      <module name="transfers" target="17" />
+      <module name="WithdrawalService" target="17" />
+    </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="DepositService" options="-parameters" />
       <module name="EmailNotification" options="-parameters" />
       <module name="ProductMS" options="-parameters" />
+      <module name="WithdrawalService" options="-parameters" />
       <module name="core" options="-parameters" />
+      <module name="transfers" options="-parameters" />
     </option>
   </component>
 </project>
