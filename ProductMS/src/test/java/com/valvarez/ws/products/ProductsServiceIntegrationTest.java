@@ -33,7 +33,9 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 
 
 @DirtiesContext
@@ -68,6 +70,12 @@ public class ProductsServiceIntegrationTest {
         ContainerTestUtils.waitForAssignment(container, embeddedKafkaBroker.getPartitionsPerTopic());
     }
 
+    // contenedor de escucha de mensajes Kafka detenido
+    @AfterAll
+    void tearDown() {
+        container.stop();
+    }
+
     @Test
     void testCreateProduct_whenGivenValidProductDetails_successFullSendsKafkaMessage() throws Exception {
 
@@ -76,21 +84,21 @@ public class ProductsServiceIntegrationTest {
         BigDecimal price = new BigDecimal("100.99");
         int cuantity = 10;
 
-        CreateProductRestModel product = new CreateProductRestModel();
-        product.setTitle(title);
-        product.setPrice(price);
-        product.setCuantity(cuantity);
+        CreateProductRestModel createProductRestModel = new CreateProductRestModel();
+        createProductRestModel.setTitle(title);
+        createProductRestModel.setPrice(price);
+        createProductRestModel.setCuantity(cuantity);
 
         // Act
-        productService.createProduct(product);
+        productService.createProduct(createProductRestModel);
 
         // Assert
-        ConsumerRecord<String, ProductCreatedEvent> message = records.poll(10000, TimeUnit.MILLISECONDS);
+        ConsumerRecord<String, ProductCreatedEvent> message = records.poll(1000, TimeUnit.MILLISECONDS);
+        assert message != null;
         assertNotNull(message.key());
-
-
+        ProductCreatedEvent productCreatedEvent = message.value();
+        assertEquals(createProductRestModel.getCuantity(), productCreatedEvent.getCuantity());
     }
-
 
     private Map<String, Object> getConsumerProperties() {
         return Map.of(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, embeddedKafkaBroker.getBrokersAsString(),
@@ -102,15 +110,4 @@ public class ProductsServiceIntegrationTest {
                 ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, environment.getProperty("spring.kafka.consumer.auto-offset-reset")
         );
     }
-
-    // contenedor de escucha de mensajes Kafka detenido
-    @AfterAll
-    void tearDown() {
-        container.stop();
-    }
-
-
-
-
-
 }
